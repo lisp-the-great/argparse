@@ -9,7 +9,7 @@ import (
 
 type Arguments struct {
 	Name    string        `arg:"-n;--name;required;help=name of the person"`
-	Age     int           `arg:"-a;--age;default=18;help=and, the age"`
+	MaxAge  int           `arg:"-a;--max-age;default=18;help=and, the max age"`
 	Gender  bool          `arg:"--gender;default=true;help=hello boys and girls"`
 	Latency time.Duration `arg:"-L;--latency;default=3m59s200ms;help=no actually meaning"`
 }

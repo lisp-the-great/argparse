@@ -72,7 +72,7 @@ func (p *Parser) Parse(v any, args ...string) {
 		if arg == nil {
 			panic(UnknownArgumentTag(args[i]))
 		}
-		if arg.Value.Kind() == reflect.Bool {
+		if arg.NumValues() == 0 {
 			arg.Value.SetBool(!arg.DefaultValue.(bool))
 		} else if i+1 == len(args) {
 			panic(MissingValue(args[i]))
@@ -98,7 +98,7 @@ func (p *Parser) String() string {
 	for k, v := range p.Args {
 		frags = append(frags, fmt.Sprintf("%s => %v", k, v))
 	}
-	return fmt.Sprintf("Parser{%s}", strings.Join(frags, ", "))
+	return fmt.Sprintf("Parser{ %s }", strings.Join(frags, ", "))
 }
 
 func Parse(v any) {
@@ -114,10 +114,10 @@ func (p *Parser) HelpMessage() string {
 		return args[i].Name < args[j].Name
 	})
 
-	shortHelps := make([]string, len(args)+1)
-	shortHelps[0] = "[-h]"
-	longHelps := make([]string, len(args)+1)
-	longHelps[0] = "-h,--help\tshow this message and exit"
+	shorts := make([]string, len(args)+1)
+	shorts[0] = "[-h]"
+	longParts := make([][2]string, len(args)+1)
+	longParts[0] = [2]string{"-h,--help", "show this message and exit"}
 	for i, a := range args {
 		var sh string
 		if a.HasFlag() {
@@ -125,18 +125,30 @@ func (p *Parser) HelpMessage() string {
 		} else {
 			sh = a.Long()
 		}
-		if a.Value.Kind() != reflect.Bool {
+		if a.NumValues() > 0 {
 			sh += " " + a.NameUpperCase()
 		}
 		if !a.Required {
 			sh = "[" + sh + "]"
 		}
-		shortHelps[i+1] = sh
-		longHelps[i+1] = a.HelpMessage()
+		shorts[i+1] = sh
+		pre, suf := a.helpMessage()
+		longParts[i+1] = [2]string{pre, suf}
+	}
+
+	maxLen := 0
+	for _, x := range longParts {
+		if l := len(x[0]); l > maxLen {
+			maxLen = l
+		}
+	}
+	longs := make([]string, len(longParts))
+	for i, x := range longParts {
+		longs[i] = x[0] + strings.Repeat(" ", maxLen-len(x[0])) + "\t" + x[1]
 	}
 
 	return fmt.Sprintf("Usage: %s %s\n\n\t%s",
 		p.Name,
-		strings.Join(shortHelps, " "),
-		strings.Join(longHelps, "\n\t"))
+		strings.Join(shorts, " "),
+		strings.Join(longs, "\n\t"))
 }

@@ -177,10 +177,17 @@ func parseInt64(t reflect.Type, v string) (any, error) {
 	return strconv.ParseInt(v, 10, 64)
 }
 
+func (a *Argument) NumValues() int {
+	if a.Value.Kind() == reflect.Bool {
+		return 0
+	}
+	return 1
+}
+
 func (a *Argument) String() string {
 	name := a.Name
 	if a.HasFlag() {
-		name = fmt.Sprintf("%s[%c]", a.Name, a.Flag)
+		name = fmt.Sprintf("[%c]%s", a.Flag, a.Name)
 	}
 
 	frags := []string{
@@ -205,17 +212,23 @@ func (a *Argument) Long() string {
 }
 
 func (a *Argument) NameUpperCase() string {
-	return strings.ToUpper(a.Name)
+	return strings.ReplaceAll(strings.ToUpper(a.Name), "-", "_")
 }
 
-func (a *Argument) HelpMessage() string {
-	frags := []string{}
+func (a *Argument) helpMessage() (string, string) {
+	pre, suf := "", a.Help
+
 	if a.HasFlag() {
-		frags = append(frags, a.Short()+",")
+		pre += a.Short() + ","
 	}
-	frags = append(frags, a.Long(), " ", a.NameUpperCase(), "\t", a.Help)
+	pre += a.Long()
+	if a.NumValues() > 0 {
+		pre += " " + a.NameUpperCase()
+	}
+
 	if a.DefaultValue != nil {
-		frags = append(frags, fmt.Sprintf("\t[default: %v]", a.DefaultValue))
+		suf += fmt.Sprintf("\t[default: %v]", a.DefaultValue)
 	}
-	return strings.Join(frags, "")
+
+	return pre, suf
 }
