@@ -197,3 +197,15 @@ func (a *Argument) String() string {
 
 	return strings.Join(frags, " ")
 }
+
+func (a *Argument) HelpMessage() string {
+	frags := []string{}
+	if a.HasFlag() {
+		frags = append(frags, fmt.Sprintf("-%c,", a.Flag))
+	}
+	frags = append(frags, "--"+a.Name, "\t", a.Help)
+	if a.DefaultValue != nil {
+		frags = append(frags, fmt.Sprintf("\t[default: %v]", a.DefaultValue))
+	}
+	return strings.Join(frags, "")
+}

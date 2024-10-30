@@ -24,3 +24,9 @@ func TestParse(t *testing.T) {
 	}
 	t.Logf("%+v", arg)
 }
+
+func TestHelp(t *testing.T) {
+	arg := &Arguments{}
+	ap := argparse.New("testHelp")
+	ap.Parse(arg, "--help")
+}

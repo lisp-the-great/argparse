@@ -8,6 +8,8 @@ import (
 
 var (
 	ErrNotStructPtr = errors.New("not struct pointer")
+
+	ErrEmptyParserName = errors.New("parser name must not be empty")
 )
 
 func InvalidTag(s string) error {

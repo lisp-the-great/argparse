@@ -4,15 +4,20 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"sort"
 	"strings"
 )
 
 type Parser struct {
+	Name string
 	Args map[string]*Argument
 }
 
 func New(name string) *Parser {
-	return &Parser{Args: map[string]*Argument{}}
+	if name == "" {
+		panic(ErrEmptyParserName)
+	}
+	return &Parser{Name: name, Args: map[string]*Argument{}}
 }
 
 func (p *Parser) Parse(v any, args ...string) {
@@ -23,6 +28,7 @@ func (p *Parser) Parse(v any, args ...string) {
 	}
 	vt = vt.Elem()
 
+	// Parse target `v` and prepare.
 	for i := 0; i < vt.NumField(); i++ {
 		sf := vt.Field(i)
 
@@ -41,6 +47,15 @@ func (p *Parser) Parse(v any, args ...string) {
 		p.Args[arg.Name] = arg
 	}
 
+	// Seek `-h` or `--help` then show help message and exit
+	for _, s := range args {
+		if s == "-h" || s == "--help" {
+			fmt.Println(p.HelpMessage())
+			return
+		}
+	}
+
+	// Match `args` with `v`'s fields.
 	for i := 0; i < len(args); i++ {
 		var arg *Argument = nil
 		if isValidFlag(args[i]) {
@@ -67,6 +82,7 @@ func (p *Parser) Parse(v any, args ...string) {
 		}
 	}
 
+	// Validate all required `Argument`s.
 	for _, arg := range p.Args {
 		if arg.Value.IsZero() && arg.DefaultValue != nil {
 			arg.Value.Set(reflect.ValueOf(arg.DefaultValue))
@@ -87,4 +103,22 @@ func (p *Parser) String() string {
 
 func Parse(v any) {
 	New(os.Args[0]).Parse(v, os.Args[1:]...)
+}
+
+func (p *Parser) HelpMessage() string {
+	args := make([]*Argument, 0, len(p.Args))
+	for _, a := range p.Args {
+		args = append(args, a)
+	}
+	sort.Slice(args, func(i, j int) bool {
+		return args[i].Name < args[j].Name
+	})
+
+	argHelps := make([]string, len(args)+1)
+	argHelps[0] = "-h,--help\tshow this message and exit"
+	for i, a := range args {
+		argHelps[i+1] = a.HelpMessage()
+	}
+
+	return fmt.Sprintf("Usage of %s:\n\n\t%s", p.Name, strings.Join(argHelps, "\n\t"))
 }
