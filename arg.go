@@ -180,11 +180,10 @@ func parseInt64(t reflect.Type, v string) (any, error) {
 func (a *Argument) String() string {
 	name := a.Name
 	if a.HasFlag() {
-		name = fmt.Sprintf("%s (%c)", a.Name, a.Flag)
+		name = fmt.Sprintf("%s[%c]", a.Name, a.Flag)
 	}
 
 	frags := []string{
-		"Argument{",
 		fmt.Sprintf("%s = %v", name, a.Value.Interface()),
 	}
 	if a.Required {
@@ -193,17 +192,28 @@ func (a *Argument) String() string {
 	if a.DefaultValue != nil {
 		frags = append(frags, fmt.Sprintf("[%v]", a.DefaultValue))
 	}
-	frags = append(frags, "}")
 
-	return strings.Join(frags, " ")
+	return fmt.Sprintf("Argument{%s}", strings.Join(frags, " "))
+}
+
+func (a *Argument) Short() string {
+	return fmt.Sprintf("-%c", a.Flag)
+}
+
+func (a *Argument) Long() string {
+	return "--" + a.Name
+}
+
+func (a *Argument) NameUpperCase() string {
+	return strings.ToUpper(a.Name)
 }
 
 func (a *Argument) HelpMessage() string {
 	frags := []string{}
 	if a.HasFlag() {
-		frags = append(frags, fmt.Sprintf("-%c,", a.Flag))
+		frags = append(frags, a.Short()+",")
 	}
-	frags = append(frags, "--"+a.Name, "\t", a.Help)
+	frags = append(frags, a.Long(), " ", a.NameUpperCase(), "\t", a.Help)
 	if a.DefaultValue != nil {
 		frags = append(frags, fmt.Sprintf("\t[default: %v]", a.DefaultValue))
 	}

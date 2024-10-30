@@ -114,11 +114,29 @@ func (p *Parser) HelpMessage() string {
 		return args[i].Name < args[j].Name
 	})
 
-	argHelps := make([]string, len(args)+1)
-	argHelps[0] = "-h,--help\tshow this message and exit"
+	shortHelps := make([]string, len(args)+1)
+	shortHelps[0] = "[-h]"
+	longHelps := make([]string, len(args)+1)
+	longHelps[0] = "-h,--help\tshow this message and exit"
 	for i, a := range args {
-		argHelps[i+1] = a.HelpMessage()
+		var sh string
+		if a.HasFlag() {
+			sh = a.Short()
+		} else {
+			sh = a.Long()
+		}
+		if a.Value.Kind() != reflect.Bool {
+			sh += " " + a.NameUpperCase()
+		}
+		if !a.Required {
+			sh = "[" + sh + "]"
+		}
+		shortHelps[i+1] = sh
+		longHelps[i+1] = a.HelpMessage()
 	}
 
-	return fmt.Sprintf("Usage of %s:\n\n\t%s", p.Name, strings.Join(argHelps, "\n\t"))
+	return fmt.Sprintf("Usage: %s %s\n\n\t%s",
+		p.Name,
+		strings.Join(shortHelps, " "),
+		strings.Join(longHelps, "\n\t"))
 }
