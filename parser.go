@@ -20,11 +20,11 @@ func New(name string) *Parser {
 	return &Parser{Name: name, Args: map[string]*Argument{}}
 }
 
-func (p *Parser) Parse(v any, args ...string) {
+func (p *Parser) Parse(v any, args ...string) error {
 	vv := reflect.ValueOf(v)
 	vt := vv.Type()
 	if vt.Kind() != reflect.Ptr || vt.Elem().Kind() != reflect.Struct {
-		panic(ErrNotStructPtr)
+		return ErrNotStructPtr
 	}
 	vt = vt.Elem()
 
@@ -51,7 +51,7 @@ func (p *Parser) Parse(v any, args ...string) {
 	for _, s := range args {
 		if s == "-h" || s == "--help" {
 			fmt.Println(p.HelpMessage())
-			return
+			return nil
 		}
 	}
 
@@ -67,6 +67,8 @@ func (p *Parser) Parse(v any, args ...string) {
 			}
 		} else if args[i][:2] == "--" {
 			arg = p.Args[args[i][2:]]
+		} else {
+			return UnknownArgumentTag(args[i])
 		}
 
 		if arg == nil {
@@ -88,9 +90,10 @@ func (p *Parser) Parse(v any, args ...string) {
 			arg.Value.Set(reflect.ValueOf(arg.DefaultValue))
 		}
 		if arg.Required && arg.Value.IsZero() {
-			panic(MissingRequiredArgument(arg.Name))
+			return MissingRequiredArgument(arg.Name)
 		}
 	}
+	return nil
 }
 
 func (p *Parser) String() string {
@@ -102,7 +105,9 @@ func (p *Parser) String() string {
 }
 
 func Parse(v any) {
-	New(os.Args[0]).Parse(v, os.Args[1:]...)
+	if err := New(os.Args[0]).Parse(v, os.Args[1:]...); err != nil {
+		panic(err)
+	}
 }
 
 func (p *Parser) HelpMessage() string {
