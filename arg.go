@@ -227,7 +227,7 @@ func (a *Argument) helpMessage() (string, string) {
 	}
 
 	if a.DefaultValue != nil {
-		suf += fmt.Sprintf("\t[default: %v]", a.DefaultValue)
+		suf += fmt.Sprintf("\n\t\t[default: %v]", a.DefaultValue)
 	}
 
 	return pre, suf
