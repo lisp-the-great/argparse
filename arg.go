@@ -103,12 +103,19 @@ func (a *Argument) SetValue(v string) error {
 	if err != nil {
 		return err
 	}
-	a.Value.Set(reflect.ValueOf(vv))
+	if a.Value.Kind() == reflect.Slice {
+		a.Value.Set(reflect.Append(a.Value, reflect.ValueOf(vv)))
+	} else {
+		a.Value.Set(reflect.ValueOf(vv))
+	}
 	return nil
 }
 
 func parseValue(v string, t reflect.Type) (c any, err error) {
 	switch t.Kind() {
+	case reflect.Slice:
+		c, err = parseValue(v, t.Elem())
+
 	case reflect.Bool:
 		c, err = strconv.ParseBool(v)
 
@@ -181,7 +188,14 @@ func (a *Argument) NumValues() int {
 	if a.Value.Kind() == reflect.Bool {
 		return 0
 	}
+	if a.Value.Kind() == reflect.Slice {
+		return 2
+	}
 	return 1
+}
+
+func (a *Argument) IsDone() bool {
+	return a.NumValues() < 2 && a.Value.IsValid()
 }
 
 func (a *Argument) String() string {
