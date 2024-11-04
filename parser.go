@@ -51,7 +51,7 @@ func (p *Parser) Parse(v any, args ...string) error {
 	for _, s := range args {
 		if s == "-h" || s == "--help" {
 			fmt.Println(p.HelpMessage())
-			return nil
+			os.Exit(0)
 		}
 	}
 
