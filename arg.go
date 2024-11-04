@@ -239,7 +239,13 @@ func (a *Argument) helpMessage() (string, string) {
 	if a.NumValues() > 0 {
 		pre += " " + a.NameUpperCase()
 	}
+	if a.NumValues() > 1 {
+		pre += " [" + a.NameUpperCase() + ", ...]"
+	}
 
+	if a.Required {
+		suf = "(!) " + suf
+	}
 	if a.DefaultValue != nil {
 		suf += fmt.Sprintf("\n\t\t[default: %v]", a.DefaultValue)
 	}
